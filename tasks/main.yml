@@ -3,14 +3,15 @@
 - block:
     - name: Get clickhouse distrib
       ansible.builtin.get_url:
-        url: "https://packages.clickhouse.com/rpm/stable/{{ item }}-{{ clickhouse_version }}.noarch.rpm"
+        url: "https://packages.clickhouse.com/rpm/stable/{{ item }}-{{ clickhouse_version }}>
         dest: "./{{ item }}-{{ clickhouse_version }}.rpm"
       with_items: "{{ clickhouse_packages }}"
   rescue:
     - name: Get clickhouse distrib
       ansible.builtin.get_url:
-        url: "https://packages.clickhouse.com/rpm/stable/clickhouse-common-static-{{ clickhouse_version }}.x86_64.rpm"
+        url: "https://packages.clickhouse.com/rpm/stable/clickhouse-common-static-{{ clickho>
         dest: "./clickhouse-common-static-{{ clickhouse_version }}.rpm"
+
 - name: Install clickhouse packages
   become: true
   ansible.builtin.yum:
@@ -26,20 +27,6 @@
     path: /etc/clickhouse-server/config.xml
     regexp: <!-- <listen_host>::</listen_host> -->
     line: <listen_host>::</listen_host>
+
 - name: Flush handlers
   meta: flush_handlers
-
-- name: Create database
-  ansible.builtin.command: "clickhouse-client -q 'create database {{ clickhouse_database_name }};'"
-  register: create_db
-  failed_when: create_db.rc != 0 and create_db.rc !=82
-  changed_when: create_db.rc == 0
-
-- name: Create table
-  tags: clickhouse_db
-  ansible.builtin.command:
-    "clickhouse-client -q 'create table {{ clickhouse_database_name }}.{{ clickhouse_create_table_name }}
-    (appname String, facility String, hostname String, message String, msgid String, procid UInt16, severity String, timestamp DateTime64, version UInt8) Engine=Log;'"
-  register: create_table
-  failed_when: create_table.rc != 0 and create_table.rc !=57
-  changed_when: create_table.rc == 0
